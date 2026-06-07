@@ -61,7 +61,7 @@ const run = async () => {
         }
       ).toArray();
 
-      res.send(result);
+      res.json(result[0]);
     });
 
     app.patch("/destinations/:id", async (req, res) => {
