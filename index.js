@@ -54,7 +54,6 @@ const run = async () => {
 
     app.get("/destinations/:id", async (req, res) => {
       const {id} = req.params;
-      console.log(req.params)
       const result = await dataCol.find(
         {
             _id: new ObjectId(id)
@@ -65,41 +64,70 @@ const run = async () => {
     });
 
     app.patch("/destinations/:id", async (req, res) => {
+        try {
+          const {id} = req.params;
+          const editedDestination = req.body;
+          const result = await dataCol.updateOne (
+              {
+                  _id: new ObjectId(id)
+              },
+              {
+                  $set: editedDestination
+              }
+          )
+
+          res.matchedCount === 0 && res.status(404).json({message: "The data you're looking for couldn't be found"});
+          
+          res.json({message: "Successfully updated", result});
+
+        } catch (e) {
+          res.status(500).json({error: e.message})
+          console.error("Update unsuccessful");
+        }
+    })
+
+    app.delete("/destinations/:id", async (req, res) => {
+
+      try {
         const {id} = req.params;
-        const editedDestination = req.body;
-        const result = await dataCol.updateOne (
-            {
-                _id: new ObjectId(id)
-            },
-            {
-                $set: {
-                    editedDestination
-                }
-            }
-        )
+        const result = await dataCol.deleteOne({
+          _id: new ObjectId(id)
+        })
+
+        console.log(`Requested deletion: ${id}`);
+
+        if (result.matchedCount === 0) {
+          return res.status(404).json({message: "Something went wrong, couldn't find the data. Look into the MongoDB collection. Or atleast try finding before trying AI suggestion"})
+        };
+
+        res.json({message: "Deleted", result});
+
+      } catch (e) {
+        res.status(500).json({error: e.message})
+      }
     })
     //==========================================================================
 
-    app.patch("/destinations", async (req, res) => {
-      try{
-        const change = dataCol.updateMany(
-        {
-          "workspace-description": { $exists: true },
-        },
-        {
-          $rename: { "workspace-description": "description" },
-        },
-      );
+    // app.patch("/destinations", async (req, res) => {
+    //   try{
+    //     const change = dataCol.updateMany(
+    //     {
+    //       "workspace-description": { $exists: true },
+    //     },
+    //     {
+    //       $rename: { "workspace-description": "description" },
+    //     },
+    //   );
 
-      await res.json({
-        message:"Updated Successfully",
-        modifiedCount: change.modifiedCount
-      })
-      } catch (e){
-        console.error(e);
-        res.status(500).json({ error: "Failed to update documents" });
-      }
-    });
+    //   await res.json({
+    //     message:"Updated Successfully",
+    //     modifiedCount: change.modifiedCount
+    //   })
+    //   } catch (e){
+    //     console.error(e);
+    //     res.status(500).json({ error: "Failed to update documents" });
+    //   }
+    // });
     /*
     Then run `curl -X PATCH http://localhost:5000/destinations` in bash terminal.
     If succeeded, bash will return `{"message":"Updated Successfully"}`.
