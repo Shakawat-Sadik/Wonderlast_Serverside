@@ -36,6 +36,47 @@ const run = async () => {
     );
 
     const dataCol = client.db("Wonderlast").collection("allThatRemains");
+    const bookingCol = client.db("Wonderlast").collection("bookings");
+
+    app.post("/bookings", async (req, res) => {
+      const newBooking = req.body;
+      const result = await bookingCol.insertOne(newBooking);
+
+      res.json({message: "Successfully added a booking", result});
+    })
+
+    app.get("/bookings", async(req, res) => {
+      const result = await bookingCol.find().toArray();
+      res.json({message: "Showing Booking data", result})
+    })
+
+    app.get("/bookings/:id", async(req, res) => {
+      const {id} = req.params;
+      const result = await bookingCol.findOne({
+        _id: new Object(id)
+      }).toArray();
+
+      res.json({message: `Found data for ${id}`, result});
+    });
+
+    app.delete("/bookings/:id", async (res, req) => {
+      const {id} = req?.params;
+
+      try {
+      const result = bookingCol.deleteOne({
+        _id: new Object(id)
+      })
+
+      if (result.matchedCount === 0) {
+          return res.status(404).json({message: "Something went wrong, couldn't find the data. Look into the MongoDB collection. Or atleast try finding before trying AI suggestion"})
+        };
+
+        res.json({message: "Deleted", result});
+
+      } catch (e) {
+        res.status(500).json({error: e.message})
+      }
+    })
 
     app.post("/destinations", async (req, res) => {
       const newDestination = req.body;
